@@ -1,0 +1,72 @@
+#!/bin/bash
+#20.- Crea un script que compruebe los intentos de acceso fallidos por ssh (fichero
+#/var/log/auth.log) desde una IP externa y la bloquee automáticamente con iptables.
+
+#1.- Comprobar si el usuario que ejecuta el script es root
+echo "Comprobando si el usuario activo es ROOT..."
+sleep 2
+user=$(whoami)
+if [ "$user" = "root" ]
+	then
+		echo "Puedes seguir ejecutando el script"
+else
+	echo "Logueate como root y ejecuta el fichero ./script20"
+	exit
+fi
+
+#2.- Comprobar si está instalado ssh
+echo "Comprobando si Aptitude está instalado..."
+sleep 2
+compo=$(dpkg -s aptitude |grep 'Status' | cut -d : -f 2 > paquetes.txt)
+if [ "$compo" = " install ok installed" ]
+	then 
+		echo "Buscando paquete ssh con aptitude... "
+		sleep 2
+		paq=$(aptitude search ssh | grep '^i\ *ssh ' | cut -d" "  -f 1  > paq.txt)
+		if [ "$paq" != "i" ]
+			then
+				echo "Paquete SSH (cliente/servidor) no instalado"
+				sleep 1
+		else
+			echo "Paquete SSH (cliente/servidor) instalado"
+			sleep 1
+		fi
+fi
+
+#3.- Buscar sesiones de ssh remotas fallidas en /var/log/auth.log
+echo "Buscando sesiones remotas conectadas a nuestro equipo por ssh..."
+sleep 2
+cat /var/log/auth.log |grep -v 'pc-Aitor' | grep 'PAM 2' > sessions.txt
+
+#4.- Comprobar tablas IP tables.
+echo "Buscando paquete iptables..."
+sleep 2
+paquete=$(dpkg -s iptables | grep "Status" | cut -d : -f 2)
+if [ "$paquete" = " install ok installed" ]
+	then
+		echo "IPtables instalado. Mostrando tablas iniciales:"
+		iptables -t nat -L
+		sleep 1
+else
+	apt-get install iptables
+fi
+
+#5.- Banear IP en IP Tables.
+echo "Bloqueando ip encontradas en auth.log..."
+listado=$(cat sessions.txt |grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | uniq)
+echo "Borrando posibles reglas de una cadena..."
+sleep 1
+iptables -F INPUT
+echo "Mostrando direcciones MAC de las ip's encontradas"
+mac=$(arp -n | grep $listado | sed 's/ /+/g' | cut -d+ -f 17)
+
+#Bloqueamos entradas por MAC
+echo "Agregando reglas de bloqueo (por IP y MAC) a Iptables..."
+sleep 1
+for i in $mac; do
+	iptables -A INPUT -s $listado -m mac --mac-source $i -j DROP
+done
+sleep 2
+echo "Tablas de Iptables terminadas"
+sleep 1
+iptables -nL
