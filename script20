@@ -36,7 +36,7 @@ fi
 #3.- Buscar sesiones de ssh remotas fallidas en /var/log/auth.log
 echo "Buscando sesiones remotas conectadas a nuestro equipo por ssh..."
 sleep 2
-cat /var/log/auth.log |grep -v 'pc-Aitor' | grep 'PAM 2' > sessions.txt
+cat /var/log/auth.log |grep 'PAM 2' > sessions.txt
 
 #4.- Comprobar tablas IP tables.
 echo "Buscando paquete iptables..."
