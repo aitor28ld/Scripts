@@ -70,3 +70,5 @@ sleep 2
 echo "Tablas de Iptables terminadas"
 sleep 1
 iptables -nL
+echo "Borrando archivos residuales"
+rm paquetes.txt sessions.txt paq.txt
