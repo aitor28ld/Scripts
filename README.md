@@ -5,7 +5,9 @@ Repositorio de scripts realizados en bash.
 ---
 
 *Autor*: Aitor León
-*Creado*:
+
+*Creado*: 13/05/2016
+
 *Contacto*:
 
 - Twitter: [@2Ait8r](https://twitter.com/2Ait8r)
