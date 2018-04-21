@@ -1,6 +1,6 @@
 # Scripts-de-bash
 
-Repositorio de scripts realizados en bash.
+Repositorio de scripts realizados en bash y python 3.5.3
 
 ---
 
