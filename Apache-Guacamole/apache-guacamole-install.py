@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Scripts to automate install Apache Guacamole Server and Client
+# Scripts to automatize the installation of Apache Guacamole Server and Client
 
 import subprocess
 
