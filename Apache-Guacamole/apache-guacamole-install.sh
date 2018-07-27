@@ -11,8 +11,8 @@ apt install libavcodec-dev libavutil-dev libswscale-dev libpango1.0-dev libssh2-
 clear
 
 # Download Server package
-user=$(whoami)
-cd /home/$user
+user=$(who | cut -d ' ' -f 1 | head -1)
+cd /home/$user/
 wget https://www.apache.org/dist/guacamole/0.9.14/source/guacamole-server-0.9.14.tar.gz
 
 # Unzip Server package
@@ -32,7 +32,7 @@ ldconfig
 clear
 
 # Download Client package
-cd /home/$user
+cd /home/$user/
 wget https://www.apache.org/dist/guacamole/0.9.14/source/guacamole-client-0.9.14.tar.gz
 
 # Unzip Client package
@@ -53,6 +53,7 @@ clear
 
 # Copy .war file
 mkdir /var/lib/tomcat8/webapps
+cd guacamole/target/
 mv guacamole-0.9.14.war guacamole.war
 cp guacamole.war /var/lib/tomcat8/webapps/guacamole.war
 
@@ -67,7 +68,6 @@ mkdir /etc/guacamole /usr/share/tomcat8/.guacamole
 
 # Create guacamole properties file
 cd /etc/guacamole
-touch guacamole.properties
 
 echo "
 guacd-hostname: localhost
@@ -75,10 +75,10 @@ guacd-port: 4822
 user-mapping: /etc/guacamole/user-mapping.xml
 auth-provider: net.sourceforge.guacamole.net.basic.BasicFileAuthenticationProvider
 basic-user-mapping: /etc/guacamole/user-mapping.xml
-" > guacamole.propierties
+" > guacamole.properties
 
 # Make a symbolic link to propierties file
-ln -s guacamole.propierties /usr/share/tomcat8/.guacamole/
+ln -s guacamole.properties /usr/share/tomcat8/.guacamole/
 
 # Create user password
 read -p "Define a user for administration panel: " paneluser
@@ -86,23 +86,18 @@ read -s -p "Define a user password: " userpassword
 read -p "Define an IP for the host:" ip
 read -p "Define a ssh user:" sshuser
 
-password=$(prinft '%s' $userpassword | md5sum | cut -d ' ' -f 1)
-
-echo '
-<user-mapping>
-  <authorize
-    username="'$paneluser'"
-    password="'$password'"
-    encoding="md5">
-   <connection name="SSH">
-    <protocol>ssh</protocol>
-    <param name="hostname">'$ip'</param>
-    <param name="port">22</param>
-    <param name="username">'$sshuser'</param>
-   </connection>
-  </authorize>
-</user-mapping>
-' > user-mapping.xml
+echo '<user-mapping>
+<authorize
+username="'$paneluser'"
+password="'$userpassword'">
+<connection name="SSH">
+<protocol>ssh</protocol>
+<param name="hostname">'$ip'</param>
+<param name="port">22</param>
+<param name="username">'$sshuser'</param>
+</connection>
+</authorize>
+</user-mapping>' > user-mapping.xml
 
 # Give privilege to files
 chmod 600 user-mapping.xml
