@@ -5,6 +5,7 @@ import sys
 # Path vars
 dir_path = '/etc/ansible/'
 log_path = '/var/log/'
+user = commands.getoutput('whoami')
 
 # Check out for SSH Keys
 def check_sshkey():
@@ -77,6 +78,11 @@ def create_config(dir_path=dir_path):
     commands.getoutput('sudo cp hosts ansible.cfg '+dir_path)
 
 
+def deploy_sshkey(user=user):
+    pubkey = commands.getoutput('cat ~/.ssh/id_rsa.pub')
+    print "{INFO} -- Now run next Ansible command \nansible-playbook main.yml --ask-pass --extra-vars 'pubkey=\""+pubkey+"\" username=\""+user+"\"'"
+
+
 if __name__ == "__main__":
     check_sshkey()
     updates()
@@ -84,3 +90,4 @@ if __name__ == "__main__":
     ansible_log()
     backup_files()
     create_config()
+    deploy_sshkey()
