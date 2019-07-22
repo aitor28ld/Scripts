@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import commands
 import sys
+import os
 
 # Path vars
 dir_path = '/etc/ansible/'
@@ -15,7 +16,7 @@ def check_sshkey():
         print '{INFO} -- SSH Keys exists'
     else:
         print '{INFO} -- Making ssh keys'
-        commands.getoutput('ssh-keygen -t rsa')
+        os.system('ssh-keygen -t rsa')
 
 # Check Linux distribution
 def check_distro():
@@ -74,7 +75,7 @@ def create_config(dir_path=dir_path):
     hostname = raw_input('Hostname of the destiny server: ').split(".")[0]
     ip = raw_input('IP of the destiny server: ')
     commands.getoutput('rm hosts')
-    commands.getoutput('echo "[default] \n'+hostname+' ansible_ssh_host='+ip+'">> hosts')
+    commands.getoutput('echo "[default] \n'+hostname+' ansible_ssh_host='+ip+'"> hosts')
     commands.getoutput('sudo cp hosts ansible.cfg '+dir_path)
 
 
