@@ -85,7 +85,7 @@ def ansible_log(log=log_path):
 def create_config(dir_path=dir_path):
     question = 'yes'
     commands.getoutput('rm hosts')
-    commands.getoutput('echo "[Default]\n" > hosts')
+    commands.getoutput('echo "[default]\n" > hosts')
     while question.lower() == 'yes' or question.lower() == 'y':
         hostname = raw_input('Hostname of the destiny server: ').split(".")[0]
         ip = raw_input('IP of the destiny server: ')
