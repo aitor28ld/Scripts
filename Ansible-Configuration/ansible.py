@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import commands
 import sys
-import os
 
 # Path vars
 dir_path = '/etc/ansible/'
 log_path = '/var/log/'
 user = commands.getoutput('whoami')
+packageslist = ['ansible','sudo','sshpass']
 
 # Check out for SSH Keys
 def check_sshkey():
@@ -16,7 +16,7 @@ def check_sshkey():
         print '{INFO} -- SSH Keys exists'
     else:
         print '{INFO} -- Making ssh keys'
-        os.system('ssh-keygen -t rsa')
+        commands.getoutput('ssh-keygen -t rsa')
 
 # Check Linux distribution
 def check_distro():
@@ -34,22 +34,32 @@ def updates():
     else:
         print "{ERROR} -- No Linux distribution found"
 
-# Check if Ansible is installed
-def check_install():
+# Check if Ansible, SSHPASS and sudo is installed
+def check_install(packagelist=packageslist):
     distro = check_distro()
-    if 'Debian' in distro:
-        installed = commands.getoutput('dpkg -s ansible | grep Status').split(":")[1].strip()
-    elif 'CentOS' in distro:
-        installed = commands.getoutput('yum -q info ansible | grep Repo').split(":")[1].strip()
-
-    if installed == 'install ok installed' or installed == 'installed':
-        print "{INFO} -- Ansible package already installed"
-    else:
-        print "{WARN} -- Ansible package not installed, installing..."
+    for package in packagelist:
         if 'Debian' in distro:
-            commands.getoutput('sudo apt-get install ansible -y')
+            installed = commands.getoutput('dpkg -s '+package+' | grep Status').split(":")[1].strip()
         elif 'CentOS' in distro:
-            commands.getoutput('sudo yum install ansible -y')
+            installed = commands.getoutput('yum -q info '+package+' | grep Repo').split(":")[1].strip()
+    
+        if installed == 'install ok installed' or installed == 'installed':
+            print "{INFO} -- "+package+" package already installed"
+        else:
+            print "{WARN} -- "+package+" package not installed, installing..."
+            if 'Debian' in distro:
+                commands.getoutput('sudo apt-get install '+package+' -y')
+            elif 'CentOS' in distro:
+                commands.getoutput('sudo yum install '+package+' -y')
+
+# Create a sudoers file configuration
+def create_sudoers(user=user):
+    ls = commands.getoutput('ls /etc/sudoers.d/ | grep "10_ansible"')
+    if ls == '10_ansible':
+        print "{INFO} -- Sudoers Ansible file already exists"
+    else:
+        print "{WARN} -- Sudoers Ansible file does not exists, creating..."
+        commands.getoutput('sudo echo "'+user+'" > /etc/sudoers.d/10_ansible')
 
 # Make all Ansible configuration files a backup
 def backup_files(dir_path=dir_path):
@@ -70,24 +80,29 @@ def ansible_log(log=log_path):
         print '{WARN} -- Log directory not exist. Creating...'
         commands.getoutput('sudo mkdir -p /var/log/ansible')
 
-# Create a hosts file for Ansible (Only 1 host)
+# Create a hosts file for Ansible
 def create_config(dir_path=dir_path):
-    hostname = raw_input('Hostname of the destiny server: ').split(".")[0]
-    ip = raw_input('IP of the destiny server: ')
+    question = 'yes'
     commands.getoutput('rm hosts')
-    commands.getoutput('echo "[default] \n'+hostname+' ansible_ssh_host='+ip+'"> hosts')
+    commands.getoutput('echo "[Default]\n" > hosts')
+    while question.lower() == 'yes' or question.lower() == 'y':
+        hostname = raw_input('Hostname of the destiny server: ').split(".")[0]
+        ip = raw_input('IP of the destiny server: ')
+        commands.getoutput('echo "'+hostname+' ansible_ssh_host='+ip+'" >> hosts')
+        question = raw_input('Do you want to add another host? [YES/no] (YES)')
     commands.getoutput('sudo cp hosts ansible.cfg '+dir_path)
 
 
 def deploy_sshkey(user=user):
     pubkey = commands.getoutput('cat ~/.ssh/id_rsa.pub')
-    print "{INFO} -- Now run next Ansible command \nansible-playbook main.yml --ask-pass --extra-vars 'pubkey=\""+pubkey+"\" username=\""+user+"\"'"
+    print "{INFO} -- Now run next Ansible command \nansible-playbook authorized_keys.yml --ask-pass --extra-vars 'pubkey=\""+pubkey+"\" username=\""+user+"\"'"
 
 
 if __name__ == "__main__":
     check_sshkey()
     updates()
     check_install()
+    create_sudoers()
     ansible_log()
     backup_files()
     create_config()
