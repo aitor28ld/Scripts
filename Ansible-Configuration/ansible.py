@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import commands
 import sys
+import os
 
 # Path vars
 dir_path = '/etc/ansible/'
@@ -16,7 +17,7 @@ def check_sshkey():
         print '{INFO} -- SSH Keys exists'
     else:
         print '{INFO} -- Making ssh keys'
-        commands.getoutput('ssh-keygen -t rsa')
+        os.system('ssh-keygen -t rsa')
 
 # Check Linux distribution
 def check_distro():
@@ -28,9 +29,9 @@ def updates():
     distro = check_distro()
     print "{INFO} -- Updating System"
     if 'Debian' in distro:
-        commands.getoutput('sudo apt-get update && apt-get upgrade -y')
+        os.system('sudo apt-get update && apt-get upgrade -y')
     elif 'CentOS' in distro:
-        commands.getoutput('sudo yum check-update && yum update -y')
+        os.system('sudo yum check-update && yum update -y')
     else:
         print "{ERROR} -- No Linux distribution found"
 
@@ -48,9 +49,9 @@ def check_install(packagelist=packageslist):
         else:
             print "{WARN} -- "+package+" package not installed, installing..."
             if 'Debian' in distro:
-                commands.getoutput('sudo apt-get install '+package+' -y')
+                os.system('sudo apt-get install '+package+' -y')
             elif 'CentOS' in distro:
-                commands.getoutput('sudo yum install '+package+' -y')
+                os.system('sudo yum install '+package+' -y')
 
 # Create a sudoers file configuration
 def create_sudoers(user=user):
@@ -59,7 +60,7 @@ def create_sudoers(user=user):
         print "{INFO} -- Sudoers Ansible file already exists"
     else:
         print "{WARN} -- Sudoers Ansible file does not exists, creating..."
-        commands.getoutput('sudo echo "'+user+'" > /etc/sudoers.d/10_ansible')
+        commands.getoutput('sudo echo "'+user+' ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/10_ansible')
 
 # Make all Ansible configuration files a backup
 def backup_files(dir_path=dir_path):
